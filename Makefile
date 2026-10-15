@@ -5,8 +5,8 @@ help:
 .DEFAULT_GOAL := help
 
 ##@ Tests
-generate-mocks: ## generate mock files using mockgen
-	go generate ./internal/server/services
+generate-mocks: ## no-op, kept so the upstream CI workflow keeps working
+	@true
 
 run-tests: ## run unit tests
 	go test -v -race ./...

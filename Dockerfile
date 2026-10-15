@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine3.21 AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -20,4 +20,4 @@ USER nonroot:nonroot
 
 EXPOSE 8000
 
-ENTRYPOINT ["./weather-mcp-server", "--address", "0.0.0.0:8000"]
+ENTRYPOINT ["./weather-mcp-server", "--http", "0.0.0.0:8000"]
