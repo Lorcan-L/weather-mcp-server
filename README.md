@@ -52,7 +52,7 @@
 需要 Go 1.25 及以上版本：
 
 ```bash
-go install github.com/Lorcan-L/weather-mcp-server/cmd/weather-mcp-server@latest
+go install github.com/Lorcan-L/weather-mcp-server/cmd/weather-mcp-server@master
 # 二进制安装在 $(go env GOPATH)/bin/weather-mcp-server
 ```
 
@@ -138,7 +138,7 @@ A lightweight MCP weather server for Chinese users. It is a fork of **[ezh0v/wea
 - Optional QWeather provider: set `QWEATHER_API_KEY` and `QWEATHER_API_HOST`
 - Transports: stdio (default), Streamable HTTP (`--http :8000` → `/mcp`), and legacy SSE (`--address`)
 
-**Install**: `go install github.com/Lorcan-L/weather-mcp-server/cmd/weather-mcp-server@latest`. The configuration for Cursor and Grok Bot is the same as in the Chinese section above.
+**Install**: `go install github.com/Lorcan-L/weather-mcp-server/cmd/weather-mcp-server@master`. The configuration for Cursor and Grok Bot is the same as in the Chinese section above.
 
 **Limitations**: the China AQI is a model-based estimate, not data from official monitoring stations. District-level names resolve better when QWeather is configured.
 
