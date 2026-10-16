@@ -1,5 +1,5 @@
 <div align="center">
-<img alt="weather" src="assets/weather.svg">
+<img alt="中文天气 logo" src="assets/logo.png" width="128">
 
 <h1>Weather MCP Server · 中文版 (CN)</h1>
 
