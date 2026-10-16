@@ -148,3 +148,37 @@ func TestQWeather(t *testing.T) {
 	_, err = q.Forecast(ctx, locs[0], 16)
 	assert.Error(t, err)
 }
+
+func TestGetJSONRetries503(t *testing.T) {
+	n := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n++
+		if n < 3 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+	var out struct {
+		OK bool `json:"ok"`
+	}
+	err := getJSON(context.Background(), srv.Client(), srv.URL, nil, &out)
+	require.NoError(t, err)
+	assert.True(t, out.OK)
+	assert.Equal(t, 3, n)
+}
+
+func TestGetJSONNoRetryOn400(t *testing.T) {
+	n := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n++
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer srv.Close()
+	var out any
+	err := getJSON(context.Background(), srv.Client(), srv.URL, nil, &out)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "HTTP 400")
+	assert.Equal(t, 1, n)
+}

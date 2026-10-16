@@ -1,3 +1,10 @@
+# 发布说明 v1.4.1
+
+## 修复
+- Open-Meteo 遇到 429/502/503/504 或网络瞬时错误时，自动重试最多 3 次（退避 200ms → 400ms），减少偶发失败
+
+---
+
 # 发布说明 v1.4.0（中文版首发）
 
 基于 [ezh0v/weather-mcp-server](https://github.com/ezh0v/weather-mcp-server)（MIT，作者 Ezhov Artem），针对中文用户做了大幅改造。

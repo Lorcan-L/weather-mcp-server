@@ -30,24 +30,60 @@ func NewOpenMeteo(timeout time.Duration) *OpenMeteo {
 
 func (o *OpenMeteo) Name() string { return "Open-Meteo" }
 
+const maxAttempts = 3
+
+func transient(code int) bool {
+	return code == http.StatusTooManyRequests || code == http.StatusBadGateway ||
+		code == http.StatusServiceUnavailable || code == http.StatusGatewayTimeout
+}
+
+// getJSON GETs and decodes JSON. It retries up to maxAttempts-1 times on
+// network errors and transient HTTP statuses (429/502/503/504), with short
+// exponential backoff (200ms, 400ms). Context cancellation aborts early.
 func getJSON(ctx context.Context, c *http.Client, u string, hdr map[string]string, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
+	var last error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("User-Agent", "weather-mcp-server-cn")
+		for k, v := range hdr {
+			req.Header.Set(k, v)
+		}
+		resp, err := c.Do(req)
+		if err != nil {
+			last = err
+			if attempt == maxAttempts || ctx.Err() != nil {
+				return last
+			}
+			sleepBackoff(ctx, attempt)
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			last = fmt.Errorf("upstream %s returned HTTP %d", req.URL.Host, resp.StatusCode)
+			if !transient(resp.StatusCode) || attempt == maxAttempts || ctx.Err() != nil {
+				return last
+			}
+			sleepBackoff(ctx, attempt)
+			continue
+		}
+		err = json.NewDecoder(resp.Body).Decode(out)
+		resp.Body.Close()
 		return err
 	}
-	req.Header.Set("User-Agent", "weather-mcp-server-cn")
-	for k, v := range hdr {
-		req.Header.Set(k, v)
+	return last
+}
+
+func sleepBackoff(ctx context.Context, attempt int) {
+	d := time.Duration(1<<uint(attempt-1)) * 200 * time.Millisecond // 200ms, 400ms
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+	case <-t.C:
 	}
-	resp, err := c.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("upstream %s returned HTTP %d", req.URL.Host, resp.StatusCode)
-	}
-	return json.NewDecoder(resp.Body).Decode(out)
 }
 
 func (o *OpenMeteo) Geocode(ctx context.Context, query string) ([]Location, error) {
